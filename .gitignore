@@ -27,3 +27,17 @@ Graph/
 /EquityCalculatorMontecarlo.pdb
 /EquityCalculatorMontecarlo.pyd
 /python37.dll
+tools/montecarlo_cpp/*.so
+tools/nn_equity/*.pickle
+/build
+/dist/
+/tools/build/
+tools/.ipynb_checkpoints/
+neuron_poker.egg-info/
+tools/equity_models/Graph/
+tools/equity_models/Graph/
+tools/nn_equity_model/train_data/
+tools/nn_equity_model/Graph
+tools/nn_equity_model/*.pickle
+tools/nn_equity_model/*.json
+tools/nn_equity_model/*.h5

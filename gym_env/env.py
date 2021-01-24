@@ -89,7 +89,7 @@ class HoldemTable(Env):
     """Pokergame environment"""
 
     def __init__(self, initial_stacks=100, small_blind=1, big_blind=2, render=False, funds_plot=True,
-                 max_raising_rounds=2, use_cpp_montecarlo=False):
+                 max_raising_rounds=2, use_nn_equity=False, use_cpp_montecarlo=False):
         """
         The table needs to be initialized once at the beginning
 
@@ -107,6 +107,15 @@ class HoldemTable(Env):
             import cppimport
             calculator = cppimport.imp("tools.montecarlo_cpp.pymontecarlo")
             get_equity = calculator.montecarlo
+
+        elif use_nn_equity:
+            import tools.nn_equity as nn_equity
+            print(nn_equity.__file__)
+            exit()
+            load_model = "equity_optuna_2_1"
+            equity_pred_model = nn_equity.PredictEquity(load_model_name=load_model, load_model_dir='./tools/nn_equity_model/')
+            get_equity = equity_pred_model.get_equity
+
         else:
             from tools.montecarlo_python import get_equity
         self.get_equity = get_equity

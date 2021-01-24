@@ -13,6 +13,7 @@ Usage:
 options:
   -h --help                 Show this screen.
   -r --render               render screen
+  -n --use_nn_equity        use neural network implementation of equity calculator.
   -c --use_cpp_montecarlo   use cpp implementation of equity calculator. Requires cpp compiler but is 500x faster
   -f --funds_plot           Plot funds at end of episode
   --log                     log file
@@ -34,11 +35,9 @@ from gym_env.env import PlayerShell
 from tools.helper import get_config
 from tools.helper import init_logger
 
-
-# pylint: disable=import-outside-toplevel
-
 def command_line_parser():
     """Entry function"""
+    print(__doc__)
     args = docopt(__doc__)
     if args['--log']:
         logfile = args['--log']
@@ -56,7 +55,7 @@ def command_line_parser():
 
     if args['selfplay']:
         num_episodes = 1 if not args['--episodes'] else int(args['--episodes'])
-        runner = SelfPlay(render=args['--render'], num_episodes=num_episodes,
+        runner = SelfPlay(render=args['--render'], num_episodes=num_episodes, use_nn_equity=args['--use_nn_equity'],
                           use_cpp_montecarlo=args['--use_cpp_montecarlo'],
                           funds_plot=args['--funds_plot'],
                           stack=int(args['--stack']))
@@ -88,10 +87,11 @@ def command_line_parser():
 class SelfPlay:
     """Orchestration of playing against itself"""
 
-    def __init__(self, render, num_episodes, use_cpp_montecarlo, funds_plot, stack=500):
+    def __init__(self, render, num_episodes, use_nn_equity, use_cpp_montecarlo, funds_plot, stack=500):
         """Initialize"""
         self.winner_in_episodes = []
         self.use_cpp_montecarlo = use_cpp_montecarlo
+        self.use_nn_equity = use_nn_equity
         self.funds_plot = funds_plot
         self.render = render
         self.env = None
@@ -128,12 +128,13 @@ class SelfPlay:
         from agents.agent_consider_equity import Player as EquityPlayer
         from agents.agent_random import Player as RandomPlayer
         env_name = 'neuron_poker-v0'
-        self.env = gym.make(env_name, initial_stacks=self.stack, render=self.render)
+        self.env = gym.make(env_name, initial_stacks=self.stack, render=self.render, 
+            use_nn_equity=self.use_nn_equity, use_cpp_montecarlo=self.use_cpp_montecarlo)
         self.env.add_player(EquityPlayer(name='equity/50/50', min_call_equity=.5, min_bet_equity=-.5))
-        self.env.add_player(EquityPlayer(name='equity/50/80', min_call_equity=.8, min_bet_equity=-.8))
-        self.env.add_player(EquityPlayer(name='equity/70/70', min_call_equity=.7, min_bet_equity=-.7))
-        self.env.add_player(EquityPlayer(name='equity/20/30', min_call_equity=.2, min_bet_equity=-.3))
-        self.env.add_player(RandomPlayer())
+        # self.env.add_player(EquityPlayer(name='equity/50/80', min_call_equity=.8, min_bet_equity=-.8))
+        # self.env.add_player(EquityPlayer(name='equity/70/70', min_call_equity=.7, min_bet_equity=-.7))
+        # self.env.add_player(EquityPlayer(name='equity/20/30', min_call_equity=.2, min_bet_equity=-.3))
+        # self.env.add_player(RandomPlayer())
         self.env.add_player(RandomPlayer())
 
         for _ in range(self.num_episodes):
@@ -156,7 +157,8 @@ class SelfPlay:
 
         for improvement_round in range(improvement_rounds):
             env_name = 'neuron_poker-v0'
-            self.env = gym.make(env_name, initial_stacks=self.stack, render=self.render)
+            self.env = gym.make(env_name, initial_stacks=self.stack, render=self.render, 
+                use_nn_equity=self.use_nn_equity, use_cpp_montecarlo=self.use_cpp_montecarlo)
             for i in range(6):
                 self.env.add_player(EquityPlayer(name=f'Equity/{calling[i]}/{betting[i]}',
                                                  min_call_equity=calling[i],
@@ -186,7 +188,7 @@ class SelfPlay:
         from agents.agent_random import Player as RandomPlayer
         env_name = 'neuron_poker-v0'
         env = gym.make(env_name, initial_stacks=self.stack, funds_plot=self.funds_plot, render=self.render,
-                       use_cpp_montecarlo=self.use_cpp_montecarlo)
+                       use_nn_equity=self.use_nn_equity, use_cpp_montecarlo=self.use_cpp_montecarlo)
 
         np.random.seed(123)
         env.seed(123)
