@@ -41,3 +41,4 @@ tools/nn_equity_model/Graph
 tools/nn_equity_model/*.pickle
 tools/nn_equity_model/*.json
 tools/nn_equity_model/*.h5
+train_memory_dqn_hu_1.p
