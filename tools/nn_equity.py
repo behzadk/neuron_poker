@@ -66,7 +66,7 @@ def preprocess_data_state(player_cards, table_cards, rank_enc, suit_enc):
 
 def generate_data(n_samples=1000, max_runs=1000, write_data_dir=None, write_data_suffix=None):
     print("Generating data")
-    cpp_calculator = cppimport.imp("montecarlo_cpp.pymontecarlo")
+    cpp_calculator = cppimport.imp("tools.montecarlo_cpp.pymontecarlo")
     cpp_equity_func = cpp_calculator.montecarlo
     get_equity = cpp_equity_func
 
@@ -302,7 +302,7 @@ class PredictEquity:
 if __name__ == "__main__":
     study_path = "./nn_equity_model/optuna_study_3.pickle"
     output_dir = "./nn_equity_model/equity_models/"
-    basic_train_routine(load_training_data=True)
-    # optuna_study(load_study=study_path)
+    # basic_train_routine(load_training_data=True)
+    optuna_study(load_study=study_path)
     # plot_study_contour(study_path, output_dir)
     # optuna_study()

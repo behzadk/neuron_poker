@@ -6,6 +6,7 @@ Usage:
   main.py selfplay keypress [options]
   main.py selfplay consider_equity [options]
   main.py selfplay equity_improvement --improvement_rounds=<> [options]
+  main.py selfplay dqn_train_heads_up [options]
   main.py selfplay dqn_train [options]
   main.py selfplay dqn_play [options]
   main.py learn_table_scraping [options]
@@ -76,6 +77,9 @@ def command_line_parser():
         elif args['dqn_train']:
             runner.dqn_train_keras_rl(model_name)
 
+        elif args['dqn_train_heads_up']:
+            runner.dqn_train_heads_up_keras_rl(model_name)
+
         elif args['dqn_play']:
             runner.dqn_play_keras_rl(model_name)
 
@@ -131,11 +135,11 @@ class SelfPlay:
         self.env = gym.make(env_name, initial_stacks=self.stack, render=self.render, 
             use_nn_equity=self.use_nn_equity, use_cpp_montecarlo=self.use_cpp_montecarlo)
         self.env.add_player(EquityPlayer(name='equity/50/50', min_call_equity=.5, min_bet_equity=-.5))
-        # self.env.add_player(EquityPlayer(name='equity/50/80', min_call_equity=.8, min_bet_equity=-.8))
+        self.env.add_player(EquityPlayer(name='equity/50/80', min_call_equity=.8, min_bet_equity=-.8))
         # self.env.add_player(EquityPlayer(name='equity/70/70', min_call_equity=.7, min_bet_equity=-.7))
         # self.env.add_player(EquityPlayer(name='equity/20/30', min_call_equity=.2, min_bet_equity=-.3))
         # self.env.add_player(RandomPlayer())
-        self.env.add_player(RandomPlayer())
+        # self.env.add_player(RandomPlayer())
 
         for _ in range(self.num_episodes):
             self.env.reset()
@@ -204,6 +208,36 @@ class SelfPlay:
         dqn = DQNPlayer()
         dqn.initiate_agent(env)
         dqn.train(env_name=model_name)
+
+    def dqn_train_heads_up_keras_rl(self, model_name):
+        """Implementation of kreras-rl deep q learing."""
+        from agents.agent_consider_equity import Player as EquityPlayer
+        from agents.agent_keras_rl_dqn import Player as DQNPlayer
+        from agents.agent_random import Player as RandomPlayer
+        env_name = 'neuron_poker-v0'
+        env = gym.make(env_name, initial_stacks=self.stack, funds_plot=self.funds_plot, render=self.render,
+                       use_nn_equity=self.use_nn_equity, use_cpp_montecarlo=self.use_cpp_montecarlo)
+
+        # np.random.seed(123)
+        # env.seed(123)
+        env.add_player(EquityPlayer(name='equity/50/70', min_call_equity=.5, min_bet_equity=.7))
+        env.add_player(PlayerShell(name='keras-rl', stack_size=self.stack))  # shell is used for callback to keras rl
+
+        env.reset()
+
+        # dqn = DQNPlayer()
+        # dqn.initiate_agent(env, load_memory=model_name, load_model=model_name, load_optimizer=model_name)
+        # # dqn.initiate_agent(env, load_memory=None, load_model=None, load_optimizer=None)
+
+        batch_sizes = [400, 300, 200, 128, 128, 128, 128, 128]
+        policy_epsilon = [0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1]
+        for x in range(10):
+            dqn = DQNPlayer()
+            # dqn.initiate_agent(env, load_memory=model_name, load_model=model_name, load_optimizer=model_name, batch_size=128)
+            dqn.initiate_agent(env, model_name=model_name, load_memory=model_name, load_model=model_name, load_optimizer=model_name, batch_size=batch_sizes[x])
+
+            dqn.train(env_name=model_name, policy_epsilon=policy_epsilon[x])
+
 
     def dqn_play_keras_rl(self, model_name):
         """Create 6 players, one of them a trained DQN"""

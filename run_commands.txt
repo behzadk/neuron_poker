@@ -1,0 +1,1 @@
+python3 main.py selfplay dqn_train_heads_up --use_nn_equity --name dqn_hu_1 --screenloglevel WARN

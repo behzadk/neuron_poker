@@ -24,11 +24,11 @@ class CommunityData:
 
     def __init__(self, num_players):
         """data"""
-        self.current_player_position = [False] * num_players  # ix[0] = dealer
+        # self.current_player_position = [False] * num_players  # ix[0] = dealer
         self.stage = [False] * 4  # one hot: preflop, flop, turn, river
         self.community_pot = None
         self.current_round_pot = None
-        self.active_players = [False] * num_players  # one hot encoded, 0 = dealer
+        # self.active_players = [False] * num_players  # one hot encoded, 0 = dealer
         self.big_blind = 0
         self.small_blind = 0
         self.legal_moves = [0 for action in Action]
@@ -54,8 +54,8 @@ class PlayerData:
         """data"""
         self.position = None
         self.equity_to_river_alive = 0
-        self.equity_to_river_2plr = 0
-        self.equity_to_river_3plr = 0
+        # self.equity_to_river_2plr = 0
+        # self.equity_to_river_3plr = 0
         self.stack = None
 
 
@@ -110,9 +110,7 @@ class HoldemTable(Env):
 
         elif use_nn_equity:
             import tools.nn_equity as nn_equity
-            print(nn_equity.__file__)
-            exit()
-            load_model = "equity_optuna_2_1"
+            load_model = "equity_optuna_3_17"
             equity_pred_model = nn_equity.PredictEquity(load_model_name=load_model, load_model_dir='./tools/nn_equity_model/')
             get_equity = equity_pred_model.get_equity
 
@@ -268,7 +266,8 @@ class HoldemTable(Env):
         self.community_data.big_blind = self.big_blind
         self.community_data.stage[np.minimum(self.stage.value, 3)] = 1  # pylint: disable= invalid-sequence-index
         self.community_data.legal_moves = [action in self.legal_moves for action in Action]
-        # self.cummunity_data.active_players
+        self.community_data
+        # self.cummunity_data.active_players 
 
         self.player_data = PlayerData()
         self.player_data.stack = [player.stack / (self.big_blind * 100) for player in self.players]
@@ -283,10 +282,11 @@ class HoldemTable(Env):
 
         arr1 = np.array(list(flatten(self.player_data.__dict__.values())))
         arr2 = np.array(list(flatten(self.community_data.__dict__.values())))
-        arr3 = np.array([list(flatten(sd.__dict__.values())) for sd in self.stage_data]).flatten()
+        # arr3 = np.array([list(flatten(sd.__dict__.values())) for sd in self.stage_data]).flatten()
         # arr_legal_only = np.array(self.community_data.legal_moves).flatten()
 
-        self.array_everything = np.concatenate([arr1, arr2, arr3]).flatten()
+        # self.array_everything = np.concatenate([arr1, arr2, arr3]).flatten()
+        self.array_everything = np.concatenate([arr1, arr2]).flatten()
 
         self.observation = self.array_everything
         self._get_legal_moves()

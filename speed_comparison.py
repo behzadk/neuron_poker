@@ -48,7 +48,7 @@ def speed_and_error_comparison(number_of_samples):
 
     players = 2
 
-    load_model = "equity_optuna_3_11"
+    load_model = "equity_optuna_4_17"
     nn_equity_calculator = nn_equity.PredictEquity(load_model_name=load_model, load_model_dir='./tools/nn_equity_model/')
     nn_equity_func = nn_equity_calculator.get_equity
 
