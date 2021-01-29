@@ -12,6 +12,7 @@ import json
 
 from tensorflow.keras.models import Sequential, model_from_json
 from tensorflow.keras.callbacks import TensorBoard
+from tensorflow.keras.callbacks import ReduceLROnPlateau
 from tensorflow.keras.layers import Dense, Dropout
 from tensorflow.keras.optimizers import Adam
 from tensorflow import keras
@@ -33,12 +34,11 @@ window_length = 1
 nb_max_start_steps = 0  # random action
 train_interval = 100  # train every 100 steps
 nb_steps_warmup = 500  # before training starts, should be higher than start steps
-nb_steps = 50000
-memory_limit = int(500000)
+nb_steps = 250000
+memory_limit = int(nb_steps/3)
 enable_double_dqn = False
 
 log = logging.getLogger(__name__)
-
 
 class Player:
     """Mandatory class with the player methods"""
@@ -56,11 +56,11 @@ class Player:
         self.model = None
         self.env = env
 
-        if load_model:
-            self.model = self.load_model(load_model)
+        # if load_model:
+        #     self.model = self.load_model(load_model)
 
 
-    def initiate_agent(self, env, model_name=None, load_memory=None, load_model=None, load_optimizer=None, load_dqn=None, batch_size=500):
+    def initiate_agent(self, env, model_name=None, load_memory=None, load_model=None, load_optimizer=None, load_dqn=None, batch_size=500, learn_rate=1e-3):
         """initiate a deep Q agent"""
         # tf.compat.v1.disable_eager_execution()
 
@@ -69,24 +69,27 @@ class Player:
         nb_actions = self.env.action_space.n
 
         if load_model:
-            self.model = self.load_model(load_model)
-            print(self.model.history)
+            pass
+        #     self.model, trainable_model, target_model = self.load_model(load_model)
+        #     print(self.model.history)
 
         else:
-            self.model = Sequential()
-            self.model.add(Dense(512, activation='relu', input_shape=env.observation_space))
-            self.model.add(Dropout(0.2))
-            self.model.add(Dense(512, activation='relu'))
-            self.model.add(Dropout(0.2))
-            self.model.add(Dense(512, activation='relu'))
-            self.model.add(Dropout(0.2))
-            self.model.add(Dense(nb_actions, activation='linear'))
+            pass
+
+        self.model = Sequential()
+        self.model.add(Dense(512, activation='relu', input_shape=env.observation_space))
+        self.model.add(Dropout(0.2))
+        self.model.add(Dense(512, activation='relu'))
+        self.model.add(Dropout(0.2))
+        self.model.add(Dense(512, activation='relu'))
+        self.model.add(Dropout(0.2))
+        self.model.add(Dense(nb_actions, activation='linear'))
 
         # Finally, we configure and compile our agent. You can use every built-in Keras optimizer and
-        # even the metrics!
-        
-            
+        # even the metrics!            
         if load_memory:
+            # print(load_memory)
+            # exit()
             try:
                 memory = self.load_memory(load_memory)
 
@@ -104,17 +107,24 @@ class Player:
         self.test_policy.eps = 0.05
         self.test_policy.env = self.env
 
+        self.reduce_lr = ReduceLROnPlateau(monitor='loss', factor=0.2, patience=5, min_lr=1e-4)
+
         nb_actions = env.action_space.n
         self.dqn = DQNAgent(model=self.model, nb_actions=nb_actions, memory=memory, nb_steps_warmup=nb_steps_warmup,
                             target_model_update=1e-2, policy=self.policy, test_policy=self.test_policy,
                             processor=CustomProcessor(), batch_size=self.batch_size,
                             train_interval=train_interval, enable_double_dqn=enable_double_dqn)
         
-        self.optimizer = Adam(lr=1e-3)
-
         # timestr = time.strftime("%Y%m%d-%H%M%S") + "_" + str(model_name)
         # self.tensorboard = MyTensorBoard(log_dir='./Graph/{}'.format(timestr), player=self)
-        self.dqn.compile(Adam(lr=1e-3), metrics=['mae'])
+        self.dqn.compile(Adam(lr=learn_rate), metrics=['mae'])
+
+        if load_model:
+            self.load_model(load_model)
+            # self.dqn.trainable_model = trainable_model
+            # self.dqn.target_model = target_model
+
+        # self.reduce_lr = ReduceLROnPlateau
 
         if load_optimizer:
             self.load_optimizer_weights(load_optimizer)
@@ -142,11 +152,10 @@ class Player:
 
         self.policy.eps = policy_epsilon
 
-        self.model.save("dqn_{}_model.h5".format(env_name), overwrite=True)
-
+        self.dqn.save_weights("dqn_{}_model.h5".format(env_name), overwrite=True)
 
         # Save memory
-        # pickle.dump( self.dqn.memory, open( "train_memory_{}.p".format(env_name), "wb" ) )
+        pickle.dump( self.dqn.memory, open( "train_memory_{}.p".format(env_name), "wb" ) )
 
         # Save optimizer weights
         symbolic_weights = getattr(self.dqn.trainable_model.optimizer, 'weights')
@@ -168,9 +177,12 @@ class Player:
         # with open('dqn_{}_json.json'.format(env_name), 'r') as architecture_json:
         #     dqn_json = json.load(architecture_json)
 
-        model = keras.models.load_model("dqn_{}_model.h5".format(env_name))
+        self.dqn.load_weights("dqn_{}_model.h5".format(env_name))
+        # model = keras.models.load_model("dqn_{}_model.h5".format(env_name))
+        # trainable_model = keras.models.load_model("dqn_{}_trainable_model.h5".format(env_name))
+        # target_model = keras.models.load_model("dqn_{}_target_model.h5".format(env_name), overwrite=True)
 
-        return model
+        # return model, trainable_model, target_model
 
     def load_memory(self, model_name):
         memory = pickle.load( open( 'train_memory_{}.p'.format(model_name), "rb" ) )

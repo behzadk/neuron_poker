@@ -225,16 +225,20 @@ class SelfPlay:
 
         env.reset()
 
-        # dqn = DQNPlayer()
+        dqn = DQNPlayer()
         # dqn.initiate_agent(env, load_memory=model_name, load_model=model_name, load_optimizer=model_name)
         # # dqn.initiate_agent(env, load_memory=None, load_model=None, load_optimizer=None)
+        # dqn.initiate_agent(env, load_memory=None, load_model=None, load_optimizer=None, batch_size=128)
+        # dqn.train(env_name=model_name, policy_epsilon=0.9)
 
-        batch_sizes = [400, 300, 200, 128, 128, 128, 128, 128]
-        policy_epsilon = [0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1]
+        batch_sizes = [128, 128, 128, 128, 128, 128, 128, 128]
+        policy_epsilon = [0.1, 0.1,0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
+        learn_rate = np.geomspace(1e-2, 1e-4, 5)
+
         for x in range(10):
             dqn = DQNPlayer()
             # dqn.initiate_agent(env, load_memory=model_name, load_model=model_name, load_optimizer=model_name, batch_size=128)
-            dqn.initiate_agent(env, model_name=model_name, load_memory=model_name, load_model=model_name, load_optimizer=model_name, batch_size=batch_sizes[x])
+            dqn.initiate_agent(env, model_name=None, load_memory=None, load_model=None, load_optimizer=None, batch_size=128, learn_rate=learn_rate[x])
 
             dqn.train(env_name=model_name, policy_epsilon=policy_epsilon[x])
 
